@@ -26,7 +26,7 @@ def capture_video(cameras, ido):
     username = "admin"
     password = "fred8808"
     url = "rtsp:/" + username + ":" + password + "@" + server_ip + "/ISAPI/streaming/tracks/" + str(cameras) + "?starttime=" + start_time + "Z&endtime=" + end_time + "Z"
-    source = "tempfiles/" + "2" + "/" + str(cameras) + "/"
+    source = "tempfiles/" + start_time + "/" + str(cameras) + "/"
     if not os.path.exists(source):
        os.makedirs(source) 
     try:
