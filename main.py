@@ -5,13 +5,36 @@ import time
 import ffmpeg
 import os
 
-lock_capture = threading.Lock()
+#Mutex
+lock_capture = threading.Lock() 
 
-def upload_drive_video(source):
+#Função responsável por upar o vídeo no drive
+def upload_drive_video(source): 
     print("Upload!")
 
+#Função responsável por editar o vídeo após baixar
+def edit_video():
+    print("Editing Video")
+    try:
+       stream = ffmpeg.input(
+           url,
+           rtsp_transport='tcp',
+           listen_timeout=-1,
+           t=15 
+       )
+       stream = ffmpeg.output(stream, 
+                              source + start_time + '.mp4',
+                              map='0:v',
+                              acodec='copy',
+                              vcodec='copy')
+       ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
+    except ffmpeg.Error as e:
+       print('stdout:', e.stdout.decode('utf8'))
+       print('stderr:', e.stderr.decode('utf8'))
+
+#Função responsável por capturar o vídeo do sistema das cameras
 def capture_video(cameras, ido):
-    print("Quero Conquistar", ido)
+    #print("Quero Conquistar", ido) #Teste de Mutex
     agora = datetime.datetime.now()
     #Retirar os 10 minutos atrás na prática
     futuro = agora + datetime.timedelta(seconds = 2) - datetime.timedelta(minutes=10)
@@ -19,7 +42,7 @@ def capture_video(cameras, ido):
     #adicionar um sleep de 5 minutos
     #time.sleep(300) #300s = 5 minutos
     lock_capture.acquire()
-    print("Conquistei!", ido)
+    #print("Conquistei!", ido)  #Teste de Mutex
     start_time = str(passado.year) + str(passado.month).zfill(2) + str(passado.day).zfill(2) + "T" + str(passado.hour).zfill(2) + str(passado.minute).zfill(2) + str(passado.second).zfill(2)
     end_time = str(futuro.year) + str(futuro.month).zfill(2) + str(futuro.day).zfill(2) + "T" + str(futuro.hour).zfill(2) + str(futuro.minute).zfill(2) + str(futuro.second).zfill(2)
     server_ip = "192.168.2.108:554"
@@ -45,10 +68,11 @@ def capture_video(cameras, ido):
     except ffmpeg.Error as e:
        print('stdout:', e.stdout.decode('utf8'))
        print('stderr:', e.stderr.decode('utf8'))
-    print('Video salvo!', ido)
+    #print('Video salvo!', ido)  #Teste de Mutex
     lock_capture.release()
-    print('Mutex liberado!', ido)
-     
+    #print('Mutex liberado!', ido)  #Teste de Mutex
+
+#Função resposável por realizar a captura de vídeo da quadra society
 def thread_capture_soccer(name):
 
     print("Thread Capture Soccer", name, " start")

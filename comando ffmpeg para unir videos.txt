@@ -1,0 +1,1 @@
+ffmpeg -i 2.mp4 -i 1.mp4 -vsync 2 -filter_complex "[0:v:0]scale=1920:1080[c1]; [1:v:0]scale=1920:1080[c2], [c1] [1:a:0] [c2] [1:a:0] concat=n=2:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" out.mp4
