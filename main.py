@@ -1,9 +1,13 @@
 from pynput.keyboard import Key, Listener 
+from sshkeyboard import listen_keyboard
 import datetime
 import threading
 import time
 import ffmpeg
 import os
+
+#Arquivos de configuração
+video_finish = "configfiles/video_finish.mov"
 
 #Mutex
 lock_capture = threading.Lock() 
@@ -13,21 +17,17 @@ def upload_drive_video(source):
     print("Upload!")
 
 #Função responsável por editar o vídeo após baixar
-def edit_video():
+def edit_video(source,start_time):
     print("Editing Video")
     try:
-       stream = ffmpeg.input(
-           url,
-           rtsp_transport='tcp',
-           listen_timeout=-1,
-           t=15 
-       )
-       stream = ffmpeg.output(stream, 
-                              source + start_time + '.mp4',
-                              map='0:v',
-                              acodec='copy',
-                              vcodec='copy')
-       ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
+       input1 = ffmpeg.input(source + start_time + ".mp4")
+       input2 = ffmpeg.input(video_finish)
+       video1 = input1.video.filter('scale', 1920, 1080).output('c1')
+       audio1 = input1.audio.output('a1')
+       video2 = input2.video.filter('scale', 1920, 1080).output('c2')
+       audio2 = input2.audio.output('a2')
+       output = ffmpeg.output(video1, audio1, video2, audio2, 'concat=n=2:v=1:a=1[v]', '[a]', v=(source + start_time + "_.mp4"))
+       ffmpeg.run(output, capture_stdout=True, capture_stderr=True)
     except ffmpeg.Error as e:
        print('stdout:', e.stdout.decode('utf8'))
        print('stderr:', e.stderr.decode('utf8'))
@@ -83,9 +83,10 @@ global ilo
 def on_press(key):
         global ilo
         print('\nYou Entered {0}'.format( key))
-        if key == Key.f7: 
+        if key == "f7": 
             print("\n\nF7\n\n")
-            x = threading.Thread(target=capture_video, args=(701,ilo))
+            #x = threading.Thread(target=capture_video, args=(701,ilo))
+            x = threading.Thread(target=edit_video, args=("2/701/","20230811T180917"))
             ilo+=1
             x.start()
         if key == Key.f8: 
@@ -94,14 +95,20 @@ def on_press(key):
             #x.start()
 
 def on_release(key):
-     if key == Key.esc:
+     if key == "esc":
          # Stop listener
          return False
 
 # Collect events until released
 ilo = 1
-with Listener(on_press = on_press, on_release=on_release) as listener: 
-    listener.join() 
+
+listen_keyboard(
+    on_press=on_press,
+    on_release=on_release,
+)
+
+#with Listener(on_press = on_press, on_release=on_release) as listener: 
+#    listener.join() 
 # agora = datetime.datetime.now()
 # futuro = agora + datetime.timedelta(seconds = 2)
 # passado = agora - datetime.timedelta(seconds = 19)
